@@ -1,0 +1,2 @@
+import { cn } from "../../lib/cn";
+export function Divider({className,label}:{className?:string;label?:string}){if(!label)return <div className={cn("h-px w-full bg-black/[0.06]",className)}/>;return <div className={cn("flex items-center gap-3",className)}><div className="h-px flex-1 bg-black/[0.06]"/><span className="text-[11px] font-medium text-(--text-tertiary)">{label}</span><div className="h-px flex-1 bg-black/[0.06]"/></div>}

@@ -1,0 +1,96 @@
+.landing-root {
+  --landing-ink: #1d1d1f;
+  --landing-muted: #6e6e73;
+  --landing-blue: #007aff;
+  --landing-graphite: #09090b;
+  position: relative;
+  isolation: isolate;
+}
+
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.48));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.82),
+    inset 0 -1px 0 rgba(255,255,255,.24),
+    0 12px 42px rgba(0,0,0,.075);
+  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(110% 90% at 16% -10%, rgba(255,255,255,.72), transparent 48%),
+    radial-gradient(80% 90% at 96% 110%, rgba(0,122,255,.08), transparent 52%);
+}
+
+.liquid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 .5px rgba(255,255,255,.42),
+    inset 12px 0 26px rgba(255,255,255,.10),
+    inset -12px 0 26px rgba(0,122,255,.025);
+}
+
+.liquid-glass--clear {
+  background: linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,.31));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 10px 38px rgba(0,0,0,.055);
+}
+
+.landing-hero-grid {
+  background-image:
+    linear-gradient(rgba(0,0,0,.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.032) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
+}
+
+.inventory-dark-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 55%, black 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at 50% 55%, black 0%, transparent 72%);
+}
+
+.asset-screen {
+  background: linear-gradient(180deg, #101114 0%, #17191d 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 28px 70px rgba(0,0,0,.22);
+}
+
+.asset-screen-glow {
+  background:
+    radial-gradient(circle at 50% 15%, rgba(0,122,255,.42), transparent 34%),
+    radial-gradient(circle at 30% 75%, rgba(95,210,255,.14), transparent 38%);
+}
+
+.module-tile-highlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 72% 22%, rgba(0,122,255,.105), transparent 34%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass,
+  .liquid-glass--clear {
+    background: rgba(255,255,255,.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

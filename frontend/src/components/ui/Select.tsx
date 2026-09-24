@@ -1,0 +1,6 @@
+import { forwardRef, type SelectHTMLAttributes, useId } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "../../lib/cn";
+interface Props extends SelectHTMLAttributes<HTMLSelectElement>{ label?:string; error?:string; hint?:string }
+export const Select=forwardRef<HTMLSelectElement,Props>(({label,error,hint,className,children,id,...props},ref)=>{const generated=useId();const selectId=id??generated;return <div className="w-full">{label&&<label htmlFor={selectId} className="mb-2 block text-[13px] font-medium text-(--text-secondary)">{label}</label>}<div className="relative"><select ref={ref} id={selectId} className={cn("h-12 w-full appearance-none rounded-(--radius-control) border bg-white/72 px-3.5 pr-10 text-[15px] outline-none backdrop-blur-xl transition duration-200 focus:bg-white/92 focus:ring-4",error?"border-red-500/35 focus:ring-red-500/10":"border-black/[0.07] focus:border-blue-500/30 focus:ring-(--accent-soft)",className)} {...props}>{children}</select><ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-(--text-tertiary)"/></div>{(error||hint)&&<p className={cn("mt-1.5 text-xs",error?"text-(--danger)":"text-(--text-tertiary)")}>{error??hint}</p>}</div>});
+Select.displayName="Select";

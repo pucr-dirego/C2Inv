@@ -1,0 +1,59 @@
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: inventarios-ti-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: inventarios_ti
+      POSTGRES_USER: inventarios_ti_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - inventarios-ti-postgres-data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventarios_ti_user -d inventarios_ti"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - inventarios-ti-network
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: inventarios-ti-pgadmin
+    restart: unless-stopped
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@inventarios.com
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+
+    ports:
+      - "5051:80"
+
+    volumes:
+      - inventarios-ti-pgadmin-data:/var/lib/pgadmin
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - inventarios-ti-network
+
+
+volumes:
+  inventarios-ti-postgres-data:
+  inventarios-ti-pgadmin-data:
+
+
+networks:
+  inventarios-ti-network:
+    name: inventarios-ti-network

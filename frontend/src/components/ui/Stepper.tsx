@@ -1,0 +1,4 @@
+import { Check } from "lucide-react";
+import { cn } from "../../lib/cn";
+interface Step{id:string;label:string}
+export function Stepper({steps,currentIndex}:{steps:Step[];currentIndex:number}){return <div className="flex items-center">{steps.map((step,index)=>{const complete=index<currentIndex,current=index===currentIndex;return <div key={step.id} className="flex min-w-0 flex-1 items-center last:flex-none"><div className="flex items-center gap-2"><div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold transition",complete||current?"border-(--accent) bg-(--accent) text-white":"border-black/10 bg-white/70 text-(--text-tertiary)")}>{complete?<Check size={13}/>:index+1}</div><span className={cn("hidden text-xs font-medium sm:block",current?"text-(--text-primary)":"text-(--text-tertiary)")}>{step.label}</span></div>{index<steps.length-1&&<div className="mx-3 h-px min-w-5 flex-1 bg-black/[0.07]"/>}</div>})}</div>}

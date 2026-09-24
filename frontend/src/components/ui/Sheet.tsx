@@ -1,0 +1,5 @@
+import { AnimatePresence,motion } from "motion/react";
+import type { ReactNode } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "./IconButton";
+export function Sheet({open,onClose,title,children}:{open:boolean;onClose:()=>void;title?:string;children:ReactNode}){return <AnimatePresence>{open&&<div className="fixed inset-0 z-50"><motion.button type="button" aria-label="Cerrar panel" onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-black/15 backdrop-blur-sm"/><motion.aside initial={{x:"100%"}} animate={{x:0}} exit={{x:"100%"}} transition={{type:"spring",stiffness:320,damping:34}} className="absolute right-0 top-0 h-full w-full max-w-md border-l border-white/60 bg-white/92 p-5 shadow-[var(--shadow-floating)] backdrop-blur-3xl"><div className="mb-5 flex items-center justify-between gap-4">{title?<h2 className="text-lg font-semibold tracking-[-0.03em]">{title}</h2>:<span/>}<IconButton label="Cerrar" size="sm" onClick={onClose}><X size={15}/></IconButton></div>{children}</motion.aside></div>}</AnimatePresence>}

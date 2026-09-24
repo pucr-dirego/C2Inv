@@ -1,0 +1,3 @@
+import { motion } from "motion/react";
+import { cn } from "../../lib/cn";
+export function TabBar({tabs,value,onChange}:{tabs:{id:string;label:string}[];value:string;onChange:(value:string)=>void}){return <div className="flex gap-1 border-b border-black/[0.06]">{tabs.map(tab=>{const active=tab.id===value;return <button key={tab.id} type="button" onClick={()=>onChange(tab.id)} className={cn("relative px-3 py-2.5 text-sm font-medium",active?"text-(--text-primary)":"text-(--text-tertiary)")}>{tab.label}{active&&<motion.span layoutId="tabbar-active" className="absolute bottom-[-1px] left-2 right-2 h-0.5 rounded-full bg-(--accent)"/>}</button>})}</div>}

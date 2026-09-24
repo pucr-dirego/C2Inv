@@ -1,0 +1,394 @@
+/*
+  Tema global del Sistema de Inventarios TI.
+  Se carga DESPUÉS de globals.css desde App.tsx.
+*/
+
+html {
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+html[data-theme="dark"] {
+  --bg: #0b0b0d;
+  --surface-base: rgba(28, 28, 30, 0.74);
+  --surface-raised: rgba(34, 34, 37, 0.9);
+  --surface-glass: rgba(28, 28, 30, 0.62);
+  --surface-floating: rgba(34, 34, 37, 0.96);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #b8b8bd;
+  --text-tertiary: #85858b;
+
+  --accent: #0a84ff;
+  --accent-hover: #409cff;
+  --accent-soft: rgba(10, 132, 255, 0.17);
+
+  --success: #30d158;
+  --warning: #ff9f0a;
+  --danger: #ff453a;
+
+  --shadow-soft:
+    0 1px 2px rgba(0, 0, 0, 0.16),
+    0 16px 38px rgba(0, 0, 0, 0.22);
+
+  --shadow-raised:
+    0 18px 48px rgba(0, 0, 0, 0.28),
+    0 2px 10px rgba(0, 0, 0, 0.16);
+
+  --shadow-floating:
+    0 30px 90px rgba(0, 0, 0, 0.46),
+    0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #0b0b0d;
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(10, 132, 255, 0.12),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 86% 18%,
+      rgba(125, 95, 255, 0.08),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #111114 0%,
+      #0d0d10 55%,
+      #09090b 100%
+    );
+}
+
+html[data-theme="dark"] {
+  scrollbar-color:
+    rgba(255, 255, 255, 0.19)
+    transparent;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background:
+    rgba(255, 255, 255, 0.17);
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(255, 255, 255, 0.27);
+}
+
+html[data-theme="dark"] ::selection {
+  background:
+    rgba(10, 132, 255, 0.26);
+}
+
+/* ---------- Glass ---------- */
+
+html[data-theme="dark"] .liquid-glass {
+  border-color:
+    rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(44, 44, 48, 0.78),
+      rgba(25, 25, 28, 0.63)
+    );
+  box-shadow:
+    inset 0 1px 0
+      rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0
+      rgba(255, 255, 255, 0.035),
+    0 16px 52px
+      rgba(0, 0, 0, 0.34);
+}
+
+html[data-theme="dark"] .liquid-glass::before {
+  background:
+    radial-gradient(
+      110% 90% at 16% -10%,
+      rgba(255, 255, 255, 0.11),
+      transparent 48%
+    ),
+    radial-gradient(
+      80% 90% at 96% 110%,
+      rgba(10, 132, 255, 0.13),
+      transparent 52%
+    );
+}
+
+html[data-theme="dark"] .liquid-glass::after {
+  box-shadow:
+    inset 0 0 0 0.5px
+      rgba(255, 255, 255, 0.08),
+    inset 12px 0 26px
+      rgba(255, 255, 255, 0.025),
+    inset -12px 0 26px
+      rgba(10, 132, 255, 0.04);
+}
+
+html[data-theme="dark"] .liquid-glass--clear {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(41, 41, 45, 0.7),
+      rgba(24, 24, 27, 0.52)
+    );
+}
+
+/* ---------- Landing / Forms ---------- */
+
+html[data-theme="dark"] .landing-root {
+  --landing-ink: #f5f5f7;
+  --landing-muted: #a8a8ad;
+  --landing-blue: #0a84ff;
+  --landing-graphite: #050506;
+}
+
+html[data-theme="dark"] .landing-hero-grid {
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.035)
+        1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035)
+        1px,
+      transparent 1px
+    );
+}
+
+html[data-theme="dark"] .equipment-create {
+  --equipment-panel:
+    rgba(28, 28, 30, 0.76);
+  --equipment-grid:
+    rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme="dark"] .equipment-review-row {
+  border-bottom-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- White surfaces ---------- */
+
+html[data-theme="dark"] .bg-white {
+  background-color:
+    rgb(40 40 43) !important;
+}
+
+html[data-theme="dark"] .bg-white\/55,
+html[data-theme="dark"] .bg-white\/58,
+html[data-theme="dark"] .bg-white\/62,
+html[data-theme="dark"] .bg-white\/65,
+html[data-theme="dark"] .bg-white\/66,
+html[data-theme="dark"] .bg-white\/68,
+html[data-theme="dark"] .bg-white\/70,
+html[data-theme="dark"] .bg-white\/72,
+html[data-theme="dark"] .bg-white\/76,
+html[data-theme="dark"] .bg-white\/78,
+html[data-theme="dark"] .bg-white\/82,
+html[data-theme="dark"] .bg-white\/84,
+html[data-theme="dark"] .bg-white\/88,
+html[data-theme="dark"] .bg-white\/90,
+html[data-theme="dark"] .bg-white\/92,
+html[data-theme="dark"] .bg-white\/94 {
+  background-color:
+    rgba(31, 31, 34, 0.84) !important;
+}
+
+html[data-theme="dark"] .bg-white\/\[0\.04\],
+html[data-theme="dark"] .bg-white\/\[0\.045\],
+html[data-theme="dark"] .bg-white\/\[0\.055\],
+html[data-theme="dark"] .bg-white\/\[0\.065\],
+html[data-theme="dark"] .bg-white\/\[0\.07\],
+html[data-theme="dark"] .bg-white\/\[0\.08\],
+html[data-theme="dark"] .bg-white\/\[0\.09\] {
+  background-color:
+    rgba(255, 255, 255, 0.06) !important;
+}
+
+html[data-theme="dark"] .hover\:bg-white:hover,
+html[data-theme="dark"] .hover\:bg-white\/70:hover,
+html[data-theme="dark"] .hover\:bg-white\/88:hover,
+html[data-theme="dark"] .hover\:bg-white\/90:hover,
+html[data-theme="dark"] .hover\:bg-white\/92:hover,
+html[data-theme="dark"] .hover\:bg-white\/95:hover {
+  background-color:
+    rgba(48, 48, 52, 0.98) !important;
+}
+
+html[data-theme="dark"] .focus\:bg-white\/92:focus,
+html[data-theme="dark"] .focus-within\:bg-white\/92:focus-within {
+  background-color:
+    rgba(46, 46, 50, 0.98) !important;
+}
+
+/* ---------- Light translucent utility surfaces ---------- */
+
+html[data-theme="dark"] .bg-black\/\[0\.025\],
+html[data-theme="dark"] .bg-black\/\[0\.035\],
+html[data-theme="dark"] .bg-black\/\[0\.04\],
+html[data-theme="dark"] .bg-black\/\[0\.045\],
+html[data-theme="dark"] .bg-black\/\[0\.05\],
+html[data-theme="dark"] .bg-black\/\[0\.055\],
+html[data-theme="dark"] .bg-black\/\[0\.06\],
+html[data-theme="dark"] .bg-black\/\[0\.065\],
+html[data-theme="dark"] .bg-black\/\[0\.07\],
+html[data-theme="dark"] .bg-black\/\[0\.08\] {
+  background-color:
+    rgba(255, 255, 255, 0.055) !important;
+}
+
+html[data-theme="dark"] .hover\:bg-black\/\[0\.022\]:hover,
+html[data-theme="dark"] .hover\:bg-black\/\[0\.025\]:hover,
+html[data-theme="dark"] .hover\:bg-black\/\[0\.032\]:hover,
+html[data-theme="dark"] .hover\:bg-black\/\[0\.04\]:hover,
+html[data-theme="dark"] .hover\:bg-black\/\[0\.045\]:hover,
+html[data-theme="dark"] .hover\:bg-black\/\[0\.05\]:hover {
+  background-color:
+    rgba(255, 255, 255, 0.085) !important;
+}
+
+html[data-theme="dark"] .group-hover\:bg-black\/\[0\.06\] {
+  background-color:
+    rgba(255, 255, 255, 0.075) !important;
+}
+
+/* ---------- Borders ---------- */
+
+html[data-theme="dark"] .border-black\/10,
+html[data-theme="dark"] .border-black\/15,
+html[data-theme="dark"] .border-black\/\[0\.04\],
+html[data-theme="dark"] .border-black\/\[0\.045\],
+html[data-theme="dark"] .border-black\/\[0\.05\],
+html[data-theme="dark"] .border-black\/\[0\.055\],
+html[data-theme="dark"] .border-black\/\[0\.06\],
+html[data-theme="dark"] .border-black\/\[0\.065\],
+html[data-theme="dark"] .border-black\/\[0\.07\] {
+  border-color:
+    rgba(255, 255, 255, 0.09) !important;
+}
+
+html[data-theme="dark"] .border-white\/55,
+html[data-theme="dark"] .border-white\/60,
+html[data-theme="dark"] .border-white\/65,
+html[data-theme="dark"] .border-white\/70,
+html[data-theme="dark"] .border-white\/75 {
+  border-color:
+    rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---------- Fixed light backgrounds ---------- */
+
+html[data-theme="dark"] .bg-\[\#f5f5f7\] {
+  background-color:
+    #151518 !important;
+}
+
+/* ---------- Text / placeholders ---------- */
+
+html[data-theme="dark"] .text-black {
+  color:
+    var(--text-primary) !important;
+}
+
+html[data-theme="dark"] .text-black\/15 {
+  color:
+    rgba(255, 255, 255, 0.18) !important;
+}
+
+html[data-theme="dark"] .text-black\/20 {
+  color:
+    rgba(255, 255, 255, 0.23) !important;
+}
+
+html[data-theme="dark"] .text-black\/25,
+html[data-theme="dark"] .text-black\/30,
+html[data-theme="dark"] .text-black\/35 {
+  color:
+    rgba(255, 255, 255, 0.32) !important;
+}
+
+html[data-theme="dark"] .placeholder\:text-black\/30::placeholder {
+  color:
+    rgba(255, 255, 255, 0.28) !important;
+}
+
+/* ---------- Semantic colors with dark-mode contrast ---------- */
+
+html[data-theme="dark"] .text-blue-600,
+html[data-theme="dark"] .text-blue-700 {
+  color:
+    #64a8ff !important;
+}
+
+html[data-theme="dark"] .text-green-600,
+html[data-theme="dark"] .text-green-700 {
+  color:
+    #5bdc79 !important;
+}
+
+html[data-theme="dark"] .text-red-600,
+html[data-theme="dark"] .text-red-700 {
+  color:
+    #ff6961 !important;
+}
+
+html[data-theme="dark"] .text-amber-700,
+html[data-theme="dark"] .text-amber-800 {
+  color:
+    #ffc15a !important;
+}
+
+/* ---------- Native controls ---------- */
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] option {
+  background:
+    #242427;
+  color:
+    #f5f5f7;
+}
+
+/* ---------- Theme control ---------- */
+
+html[data-theme="dark"] .theme-toggle-global {
+  border-color:
+    rgba(255, 255, 255, 0.12) !important;
+  background:
+    rgba(35, 35, 38, 0.82) !important;
+  color:
+    #e9e9ed !important;
+  box-shadow:
+    0 14px 42px
+      rgba(0, 0, 0, 0.38) !important;
+}
+
+html[data-theme="dark"] .theme-toggle-global:hover {
+  background:
+    rgba(48, 48, 52, 0.96) !important;
+}
+
+@media (
+  prefers-reduced-transparency:
+    reduce
+) {
+  html[data-theme="dark"] .liquid-glass,
+  html[data-theme="dark"] .liquid-glass--clear {
+    background:
+      rgba(28, 28, 30, 0.98);
+  }
+}

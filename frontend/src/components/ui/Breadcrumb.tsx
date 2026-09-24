@@ -1,0 +1,2 @@
+import { ChevronRight } from "lucide-react";
+export function Breadcrumb({items}:{items:{label:string}[]}){return <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">{items.map((item,index)=><span key={`${item.label}-${index}`} className="flex items-center gap-1.5"><span className={index===items.length-1?"font-medium text-(--text-primary)":"text-(--text-tertiary)"}>{item.label}</span>{index<items.length-1&&<ChevronRight size={13} className="text-black/25"/>}</span>)}</nav>}

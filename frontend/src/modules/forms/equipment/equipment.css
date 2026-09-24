@@ -1,0 +1,36 @@
+.equipment-create {
+  --equipment-panel: rgba(255, 255, 255, 0.72);
+  --equipment-grid: rgba(0, 0, 0, 0.032);
+}
+
+.equipment-create-grid {
+  background-image:
+    linear-gradient(var(--equipment-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--equipment-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+.equipment-device-shell {
+  background:
+    linear-gradient(145deg, rgba(25, 27, 31, 0.98), rgba(8, 9, 11, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 30px 80px rgba(0, 0, 0, 0.22);
+}
+
+.equipment-device-screen {
+  background:
+    radial-gradient(circle at 52% 5%, rgba(0, 122, 255, 0.34), transparent 34%),
+    radial-gradient(circle at 18% 85%, rgba(90, 205, 255, 0.11), transparent 40%),
+    linear-gradient(180deg, #121417 0%, #181b20 100%);
+}
+
+.equipment-review-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.055);
+}
+
+.equipment-review-row:last-child {
+  border-bottom: 0;
+}

@@ -1,0 +1,4 @@
+import type { LucideIcon } from "lucide-react";
+import { cn } from "../../lib/cn";
+interface Item{id:string;label:string;icon:LucideIcon}
+export function SideRail({items,activeId,onChange}:{items:Item[];activeId:string;onChange:(id:string)=>void}){return <aside className="flex w-64 flex-col gap-1 rounded-[24px] border border-black/[0.05] bg-white/55 p-2 shadow-sm backdrop-blur-2xl">{items.map(item=>{const active=item.id===activeId;const Glyph=item.icon;return <button key={item.id} type="button" onClick={()=>onChange(item.id)} className={cn("flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-left text-sm font-medium transition",active?"bg-white text-(--text-primary) shadow-sm":"text-(--text-secondary) hover:bg-white/70 hover:text-(--text-primary)")}><Glyph size={17}/>{item.label}</button>})}</aside>}

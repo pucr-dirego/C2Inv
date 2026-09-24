@@ -1,0 +1,5 @@
+import { forwardRef, type TextareaHTMLAttributes, useId } from "react";
+import { cn } from "../../lib/cn";
+interface Props extends TextareaHTMLAttributes<HTMLTextAreaElement>{ label?:string; error?:string; hint?:string }
+export const TextArea=forwardRef<HTMLTextAreaElement,Props>(({label,error,hint,className,id,...props},ref)=>{const generated=useId();const textareaId=id??generated;return <div className="w-full">{label&&<label htmlFor={textareaId} className="mb-2 block text-[13px] font-medium text-(--text-secondary)">{label}</label>}<textarea ref={ref} id={textareaId} className={cn("min-h-28 w-full resize-y rounded-(--radius-control) border bg-white/72 px-3.5 py-3 text-[15px] outline-none backdrop-blur-xl transition duration-200 placeholder:text-black/30 focus:bg-white/92 focus:ring-4",error?"border-red-500/35 focus:ring-red-500/10":"border-black/[0.07] focus:border-blue-500/30 focus:ring-(--accent-soft)",className)} {...props}/>{(error||hint)&&<p className={cn("mt-1.5 text-xs",error?"text-(--danger)":"text-(--text-tertiary)")}>{error??hint}</p>}</div>});
+TextArea.displayName="TextArea";
