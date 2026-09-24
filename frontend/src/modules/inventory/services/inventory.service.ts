@@ -35,8 +35,8 @@ async function request<T>(
   return data as T;
 }
 
-function queryString(
-  values: Record<string, unknown>,
+function queryString<T extends object>(
+  values: T,
 ) {
   const params = new URLSearchParams();
 

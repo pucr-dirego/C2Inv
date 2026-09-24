@@ -289,6 +289,12 @@ export async function createEquipment(
 
     const row = result.rows[0];
 
+    if (!row) {
+      throw new Error(
+        "El registro creado no fue devuelto por PostgreSQL.",
+      );
+    }
+
     return {
       id: row.id,
       numeroInventario: row.numero_inventario,

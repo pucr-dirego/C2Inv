@@ -71,7 +71,7 @@ export async function catalogs(
 }
 
 export async function approve(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) {
   const validation = accessSchema.safeParse(req.body);
@@ -109,7 +109,7 @@ export async function approve(
 }
 
 export async function access(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) {
   const validation = accessSchema.safeParse(req.body);
@@ -147,7 +147,7 @@ export async function access(
 }
 
 export async function block(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) {
   const validation = z
@@ -189,7 +189,7 @@ export async function block(
 }
 
 export async function unblock(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) {
   try {
@@ -216,7 +216,7 @@ export async function unblock(
 }
 
 export async function revokeSessions(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) {
   try {

@@ -1,0 +1,145 @@
+name: inventarios-ti
+
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: invti-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "127.0.0.1:5434:5432"
+
+    volumes:
+      - invti-postgres-data:/var/lib/postgresql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - invti-network
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: invti-pgadmin
+    restart: unless-stopped
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+
+    ports:
+      - "127.0.0.1:5051:80"
+
+    volumes:
+      - invti-pgadmin-data:/var/lib/pgadmin
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - invti-network
+
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: invti-backend
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3002
+
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS}
+
+    ports:
+      - "127.0.0.1:3100:3002"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1));"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - invti-network
+
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: "/"
+
+    container_name: invti-frontend
+    restart: unless-stopped
+
+    ports:
+      - "8890:80"
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/ || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - invti-network
+
+
+volumes:
+  invti-postgres-data:
+    name: invti-postgres-data
+
+  invti-pgadmin-data:
+    name: invti-pgadmin-data
+
+
+networks:
+  invti-network:
+    name: invti-network
+    driver: bridge

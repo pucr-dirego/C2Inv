@@ -134,7 +134,7 @@ export async function create(
 }
 
 export async function update(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
   const validation = equipmentSchema
@@ -178,7 +178,7 @@ export async function update(
 }
 
 export async function deactivate(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
   const validation = z
@@ -223,7 +223,7 @@ export async function deactivate(
 }
 
 export async function reactivate(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
   const validation = z

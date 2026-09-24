@@ -134,7 +134,7 @@ export async function mine(
 }
 
 export async function detail(
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
   try {

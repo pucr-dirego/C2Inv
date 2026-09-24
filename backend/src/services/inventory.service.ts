@@ -446,7 +446,13 @@ export async function getInventoryOverview(
     getVisibleBranches(user),
   ]);
 
-  const totals = totalsResult.rows[0];
+  const totals = totalsResult.rows[0] ?? {
+    noOperativos: 0,
+    observaciones: 0,
+    sinResponsable: 0,
+    facturaPendiente: 0,
+    danoFisico: 0,
+  };
 
   const attention = [
     {
