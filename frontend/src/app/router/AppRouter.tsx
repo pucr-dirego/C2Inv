@@ -16,6 +16,9 @@ import { EquipmentDetailPage } from "../../modules/inventory/pages/EquipmentDeta
 import { EquipmentCreatePage } from "../../modules/forms/equipment/pages/EquipmentCreatePage";
 import { EquipmentEditPage } from "../../modules/forms/equipment/pages/EquipmentEditPage";
 import { AdminUsersPage } from "../../modules/admin/pages/AdminUsersPage";
+import { AdminBranchesPage } from "../../modules/admin/pages/AdminBranchesPage";
+import { AnalyticsPage } from "../../modules/analytics/pages/AnalyticsPage";
+import { ReportsPage } from "../../modules/reports/pages/ReportsPage";
 
 export function AppRouter() {
   return (
@@ -106,6 +109,53 @@ export function AppRouter() {
                 ]}
               >
                 <EquipmentEditPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <RoleRoute
+                roles={[
+                  "SUPERADMIN",
+                  "GERENTE",
+                ]}
+              >
+                <AnalyticsPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <RoleRoute
+                roles={[
+                  "SUPERADMIN",
+                  "GERENTE",
+                ]}
+              >
+                <ReportsPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/branches"
+          element={
+            <ProtectedRoute>
+              <RoleRoute
+                roles={[
+                  "SUPERADMIN",
+                ]}
+              >
+                <AdminBranchesPage />
               </RoleRoute>
             </ProtectedRoute>
           }

@@ -12,6 +12,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "../../../components/ui/Button";
 import { ChoiceField } from "../../../components/ui/ChoiceField";
@@ -37,6 +38,7 @@ import type {
 } from "../types/admin.types";
 
 export function AdminUsersPage() {
+  const navigate = useNavigate();
   const { pushToast } =
     useToast();
 
@@ -275,6 +277,16 @@ export function AdminUsersPage() {
           <p className="mt-4 max-w-2xl text-sm leading-6 text-(--text-secondary)">
             Aprueba cuentas, define su rol y limita el alcance operativo a las sucursales correspondientes.
           </p>
+
+          <div className="mt-5">
+            <Button
+              variant="secondary"
+              leftIcon={<Building2 size={15} />}
+              onClick={() => navigate("/admin/branches")}
+            >
+              Gestionar sucursales
+            </Button>
+          </div>
         </section>
 
         <section className="mt-8 flex flex-col gap-3 rounded-[24px] border border-black/[0.055] bg-white/58 p-4 shadow-sm backdrop-blur-2xl sm:flex-row sm:items-end sm:justify-between">
@@ -306,7 +318,9 @@ export function AdminUsersPage() {
                     label:
                       branch.nombre,
                     description:
-                      branch.codigo,
+                      branch.activa === false
+                        ? `${branch.codigo} · Inactiva`
+                        : branch.codigo,
                   }),
                 ),
               ]}
@@ -528,7 +542,9 @@ export function AdminUsersPage() {
                       label:
                         item.nombre,
                       description:
-                        item.codigo,
+                        item.activa === false
+                          ? `${item.codigo} · Inactiva`
+                          : item.codigo,
                     }),
                   )}
                 />

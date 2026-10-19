@@ -298,9 +298,10 @@ export function BranchScopePicker({
                         </span>
 
                         <span className="mt-0.5 block text-[10px] uppercase tracking-[0.08em] text-(--text-tertiary)">
-                          {
-                            branch.codigo
-                          }
+                          {branch.codigo}
+                          {branch.activa === false
+                            ? " · INACTIVA"
+                            : ""}
                         </span>
                       </span>
                     </button>

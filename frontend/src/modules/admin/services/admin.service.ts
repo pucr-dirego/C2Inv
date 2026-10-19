@@ -1,4 +1,5 @@
 import type {
+  AdminBranch,
   AdminCatalogs,
   AdminUser,
   ManagedRole,
@@ -124,6 +125,37 @@ export async function revokeUserSessions(
     `/api/admin/users/${id}/revoke-sessions`,
     {
       method: "POST",
+    },
+  );
+}
+
+
+export async function getAdminBranches() {
+  const response = await request<{
+    ok: true;
+    branches: AdminBranch[];
+  }>("/api/admin/branches");
+
+  return response.branches;
+}
+
+export async function updateAdminBranchStatus(
+  id: string,
+  active: boolean,
+) {
+  return request<{
+    ok: true;
+    branch: {
+      id: string;
+      codigo: string;
+      nombre: string;
+      activa: boolean;
+    };
+  }>(
+    `/api/admin/branches/${encodeURIComponent(id)}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ active }),
     },
   );
 }

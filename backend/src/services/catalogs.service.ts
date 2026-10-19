@@ -1,8 +1,19 @@
+
 import { pool } from "../db/pool.js";
 import type {
   EquipmentAuthUser,
   EquipmentCatalogs,
 } from "../types/equipment.js";
+
+type InvoiceCatalogRow = {
+  id: string;
+  numeroFactura: string | null;
+  fechaFactura: string | null;
+  proveedorNombre: string | null;
+  razonSocial: string | null;
+  moneda: string;
+  total: string | number | null;
+};
 
 export async function getEquipmentCatalogs(
   user: EquipmentAuthUser,
@@ -10,6 +21,9 @@ export async function getEquipmentCatalogs(
   const superAdmin =
     user.roles.includes("SUPERADMIN");
 
+  // Incluye asignaciones históricas/inactivas para decidir alcance
+  // de lectura. Las sucursales disponibles para NUEVAS capturas
+  // siguen filtrándose por activa = TRUE.
   const branchIds =
     user.sucursales.map(
       (branch) => branch.id,
@@ -38,7 +52,51 @@ export async function getEquipmentCatalogs(
           )
         : Promise.resolve({
             rows: [],
-          } as any);
+          });
+
+  const invoicesPromise =
+    superAdmin
+      ? pool.query<InvoiceCatalogRow>(
+          `
+            SELECT
+              f.id,
+              f.numero_factura AS "numeroFactura",
+              f.fecha_factura AS "fechaFactura",
+              f.proveedor_nombre AS "proveedorNombre",
+              f.razon_social AS "razonSocial",
+              f.moneda,
+              f.total
+            FROM facturas_compra_ti f
+            ORDER BY f.creado_en DESC
+            LIMIT 100
+          `,
+        )
+      : branchIds.length
+        ? pool.query<InvoiceCatalogRow>(
+            `
+              SELECT
+                f.id,
+                f.numero_factura AS "numeroFactura",
+                f.fecha_factura AS "fechaFactura",
+                f.proveedor_nombre AS "proveedorNombre",
+                f.razon_social AS "razonSocial",
+                f.moneda,
+                f.total
+              FROM facturas_compra_ti f
+              WHERE EXISTS (
+                SELECT 1
+                FROM facturas_compra_ti_sucursales fs
+                WHERE fs.factura_id = f.id
+                  AND fs.sucursal_id = ANY($1::uuid[])
+              )
+              ORDER BY f.creado_en DESC
+              LIMIT 100
+            `,
+            [branchIds],
+          )
+        : Promise.resolve({
+            rows: [] as InvoiceCatalogRow[],
+          });
 
   const [
     sucursales,
@@ -96,21 +154,7 @@ export async function getEquipmentCatalogs(
       `,
     ),
 
-    pool.query(
-      `
-        SELECT
-          id,
-          numero_factura AS "numeroFactura",
-          fecha_factura AS "fechaFactura",
-          proveedor_nombre AS "proveedorNombre",
-          razon_social AS "razonSocial",
-          moneda,
-          total
-        FROM facturas_compra_ti
-        ORDER BY creado_en DESC
-        LIMIT 100
-      `,
-    ),
+    invoicesPromise,
   ]);
 
   return {

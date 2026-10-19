@@ -192,11 +192,10 @@ async function getVisibleBranches(
     nombre: string;
   }>(
     `
-      SELECT id, codigo, nombre
+      SELECT id, codigo, nombre, activa
       FROM sucursales
-      WHERE activa = TRUE
-        AND id = ANY($1::uuid[])
-      ORDER BY nombre
+      WHERE id = ANY($1::uuid[])
+      ORDER BY activa DESC, nombre
     `,
     [ids],
   );
@@ -453,6 +452,12 @@ export async function getInventoryOverview(
     facturaPendiente: 0,
     danoFisico: 0,
   };
+
+  if (!totals) {
+    throw new Error(
+      "La consulta de resumen del inventario no devolvió resultados.",
+    );
+  }
 
   const attention = [
     {

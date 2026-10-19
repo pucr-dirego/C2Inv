@@ -60,6 +60,25 @@ function authUser(res: Response): EquipmentAuthUser {
   return res.locals.authUser as EquipmentAuthUser;
 }
 
+/**
+ * Express puede entregar un parámetro ausente o múltiple.
+ * Validamos el identificador antes de enviarlo a los servicios.
+ */
+function getRouteId(req: Request, res: Response): string | null {
+  const id = req.params.id;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({
+      ok: false,
+      code: "INVALID_ID",
+      message: "El identificador del equipo no es válido.",
+    });
+    return null;
+  }
+
+  return id;
+}
+
 function handleServiceError(
   error: unknown,
   res: Response,
@@ -72,15 +91,21 @@ function handleServiceError(
 
   if (
     error.code === "FORBIDDEN" ||
-    error.code === "BRANCH_NOT_ALLOWED"
+    error.code === "BRANCH_NOT_ALLOWED" ||
+    error.code === "INVOICE_NOT_ALLOWED"
   ) {
     status = 403;
-  } else if (error.code === "NOT_FOUND") {
+  } else if (
+    error.code === "NOT_FOUND" ||
+    error.code === "BRANCH_NOT_FOUND"
+  ) {
     status = 404;
   } else if (
     error.code === "SERIAL_IN_USE" ||
     error.code === "HOSTNAME_IN_USE" ||
-    error.code === "VERSION_CONFLICT"
+    error.code === "VERSION_CONFLICT" ||
+    error.code === "BRANCH_INACTIVE" ||
+    error.code === "CATALOG_INACTIVE"
   ) {
     status = 409;
   }
@@ -137,6 +162,9 @@ export async function update(
   req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
+  const id = getRouteId(req, res);
+  if (id === null) return;
+
   const validation = equipmentSchema
     .extend({
       version: z.number().int().positive(),
@@ -155,7 +183,7 @@ export async function update(
 
   try {
     const result = await updateEquipment(
-      req.params.id,
+      id,
       validation.data,
       authUser(res),
     );
@@ -181,6 +209,9 @@ export async function deactivate(
   req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
+  const id = getRouteId(req, res);
+  if (id === null) return;
+
   const validation = z
     .object({
       motivoBajaId: uuid,
@@ -200,7 +231,7 @@ export async function deactivate(
 
   try {
     const result = await deactivateEquipment(
-      req.params.id,
+      id,
       validation.data,
       authUser(res),
     );
@@ -226,6 +257,9 @@ export async function reactivate(
   req: Request<{ id: string }>,
   res: Response,
 ): Promise<void> {
+  const id = getRouteId(req, res);
+  if (id === null) return;
+
   const validation = z
     .object({
       version: z.number().int().positive(),
@@ -243,7 +277,7 @@ export async function reactivate(
 
   try {
     const result = await reactivateEquipment(
-      req.params.id,
+      id,
       validation.data.version,
       authUser(res),
     );

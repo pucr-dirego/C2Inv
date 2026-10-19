@@ -1,0 +1,339 @@
+.analytics-root {
+  --analytics-panel: rgba(255, 255, 255, 0.7);
+  --analytics-panel-strong: rgba(255, 255, 255, 0.88);
+  --analytics-border: rgba(0, 0, 0, 0.055);
+  --analytics-map-bg: rgba(255, 255, 255, 0.56);
+  --analytics-map-grid: rgba(0, 0, 0, 0.026);
+  --analytics-series-1: #007aff;
+  --analytics-series-2: #34c759;
+  --analytics-series-3: #ff9f0a;
+  --analytics-series-4: #8e8e93;
+  --analytics-ring-track: rgba(0, 0, 0, 0.055);
+  --analytics-chart-grid: rgba(0, 0, 0, 0.055);
+}
+
+.analytics-kpi-card,
+.analytics-card,
+.analytics-detail-panel,
+.analytics-map-stage {
+  border: 1px solid var(--analytics-border);
+  background: var(--analytics-panel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 55px rgba(0, 0, 0, 0.055);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+}
+
+.analytics-map-stage {
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(0, 122, 255, 0.055), transparent 34%),
+    var(--analytics-map-bg);
+}
+
+.analytics-map-grid {
+  background-image:
+    linear-gradient(var(--analytics-map-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--analytics-map-grid) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 78%);
+}
+
+.analytics-map-glow {
+  background: rgba(0, 122, 255, 0.075);
+  filter: blur(100px);
+}
+
+.analytics-map-svg {
+  overflow: visible;
+}
+
+.analytics-map-svg .analytics-geography {
+  fill: var(--analytics-geo-fill);
+  outline: none;
+  transition:
+    fill 180ms ease,
+    stroke-width 180ms ease,
+    opacity 180ms ease;
+}
+
+.analytics-map-svg .analytics-geography:hover {
+  fill: var(--analytics-geo-hover);
+  cursor: pointer;
+}
+
+.analytics-map-svg .analytics-geography:focus-visible {
+  fill: var(--analytics-geo-hover);
+  stroke: var(--analytics-series-1);
+  stroke-width: 1.8;
+}
+
+.analytics-marker-core,
+.analytics-marker-halo {
+  transform-origin: center;
+  transition:
+    r 160ms ease,
+    fill 160ms ease,
+    opacity 160ms ease;
+}
+
+.analytics-marker-halo {
+  animation: analytics-marker-enter 220ms ease-out both;
+}
+
+@keyframes analytics-marker-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.analytics-segmented {
+  border: 1px solid var(--analytics-border);
+  background: rgba(0, 0, 0, 0.035);
+}
+
+.analytics-segmented-pill {
+  border: 1px solid rgba(0, 0, 0, 0.045);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.analytics-kpi-icon,
+.analytics-icon-neutral,
+.analytics-map-control {
+  border: 1px solid rgba(0, 0, 0, 0.045);
+  background: rgba(0, 0, 0, 0.035);
+  color: var(--text-secondary);
+}
+
+.analytics-icon-good {
+  background: rgba(52, 199, 89, 0.1);
+  color: #248a3d;
+}
+
+.analytics-icon-warn {
+  background: rgba(255, 159, 10, 0.12);
+  color: #b76700;
+}
+
+.analytics-map-control {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.analytics-map-control:hover {
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text-primary);
+}
+
+.analytics-detail-stat,
+.analytics-meta-strip,
+.analytics-branch-row {
+  border: 1px solid rgba(0, 0, 0, 0.045);
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.analytics-branch-row {
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.analytics-branch-row:hover {
+  background: rgba(0, 0, 0, 0.045);
+  transform: translateY(-1px);
+}
+
+.analytics-live-pill {
+  background: rgba(0, 122, 255, 0.09);
+  color: #0071e3;
+}
+
+.analytics-bar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.analytics-bar-fill {
+  background: linear-gradient(90deg, #007aff, #5ac8fa);
+}
+
+.analytics-trend-glow {
+  background: rgba(0, 122, 255, 0.09);
+  filter: blur(70px);
+}
+
+.analytics-trend-chip {
+  background: rgba(52, 199, 89, 0.1);
+  color: #248a3d;
+}
+
+html[data-theme="dark"] .analytics-root {
+  --analytics-panel: rgba(27, 27, 30, 0.68);
+  --analytics-panel-strong: rgba(31, 31, 34, 0.9);
+  --analytics-border: rgba(255, 255, 255, 0.09);
+  --analytics-map-bg: rgba(20, 20, 23, 0.72);
+  --analytics-map-grid: rgba(255, 255, 255, 0.025);
+  --analytics-series-1: #0a84ff;
+  --analytics-series-2: #30d158;
+  --analytics-series-3: #ff9f0a;
+  --analytics-series-4: #8e8e93;
+  --analytics-ring-track: rgba(255, 255, 255, 0.07);
+  --analytics-chart-grid: rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme="dark"] .analytics-kpi-card,
+html[data-theme="dark"] .analytics-card,
+html[data-theme="dark"] .analytics-detail-panel,
+html[data-theme="dark"] .analytics-map-stage {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 18px 58px rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="dark"] .analytics-map-stage {
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(10, 132, 255, 0.1), transparent 34%),
+    var(--analytics-map-bg);
+}
+
+html[data-theme="dark"] .analytics-segmented {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+html[data-theme="dark"] .analytics-segmented-pill {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(48, 48, 52, 0.96);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="dark"] .analytics-kpi-icon,
+html[data-theme="dark"] .analytics-icon-neutral,
+html[data-theme="dark"] .analytics-map-control,
+html[data-theme="dark"] .analytics-detail-stat,
+html[data-theme="dark"] .analytics-meta-strip,
+html[data-theme="dark"] .analytics-branch-row {
+  border-color: rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+html[data-theme="dark"] .analytics-map-control:hover,
+html[data-theme="dark"] .analytics-branch-row:hover {
+  background: rgba(255, 255, 255, 0.085);
+}
+
+html[data-theme="dark"] .analytics-icon-good {
+  background: rgba(48, 209, 88, 0.11);
+  color: #63e27f;
+}
+
+html[data-theme="dark"] .analytics-icon-warn {
+  background: rgba(255, 159, 10, 0.12);
+  color: #ffb340;
+}
+
+html[data-theme="dark"] .analytics-live-pill {
+  background: rgba(10, 132, 255, 0.13);
+  color: #64b5ff;
+}
+
+html[data-theme="dark"] .analytics-bar-track {
+  background: rgba(255, 255, 255, 0.065);
+}
+
+html[data-theme="dark"] .analytics-trend-chip {
+  background: rgba(48, 209, 88, 0.11);
+  color: #63e27f;
+}
+
+html[data-theme="dark"] .analytics-card .divide-black\/\[0\.05\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+@media (max-width: 640px) {
+  .analytics-map-stage,
+  .analytics-detail-panel {
+    min-height: 500px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .analytics-kpi-card,
+  .analytics-card,
+  .analytics-detail-panel,
+  .analytics-map-stage,
+  .analytics-map-control {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Map zoom / pan */
+.analytics-map-stage .rsm-zoomable-group {
+  cursor: grab;
+}
+
+.analytics-map-stage .rsm-zoomable-group:active {
+  cursor: grabbing;
+}
+
+.analytics-map-zoom-controls {
+  border: 1px solid var(--analytics-border);
+  background: var(--analytics-panel-strong);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.075);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+.analytics-map-control-square {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.analytics-map-control-square + .analytics-map-control-square {
+  border-top: 1px solid var(--analytics-border);
+}
+
+.analytics-map-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.34;
+}
+
+.analytics-map-control:disabled:hover {
+  background: transparent;
+  color: var(--text-secondary);
+  transform: none;
+}
+
+.analytics-map-zoom-readout {
+  min-width: 46px;
+  justify-content: center;
+}
+
+.analytics-marker-code {
+  transition: opacity 140ms ease;
+}
+
+html[data-theme="dark"] .analytics-map-zoom-controls {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 640px) {
+  .analytics-map-zoom-controls .analytics-map-control-square {
+    width: 36px;
+    height: 36px;
+  }
+}

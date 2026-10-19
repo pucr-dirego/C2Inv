@@ -83,6 +83,20 @@ export function InventoryShell({
                 Inventario
               </NavLink>
 
+              <NavLink
+                to="/analytics"
+                className={link}
+              >
+                Analítica
+              </NavLink>
+
+              <NavLink
+                to="/reports"
+                className={link}
+              >
+                Reportes
+              </NavLink>
+
               {isSuperAdmin && (
                 <NavLink
                   to="/admin"

@@ -1,3 +1,6 @@
+
+import type { PoolClient } from "pg";
+
 import { pool } from "../db/pool.js";
 import type {
   AdminAuthUser,
@@ -14,7 +17,105 @@ export class AdminServiceError extends Error {
   }
 }
 
+type Queryable = {
+  query: (
+    text: string,
+    values?: unknown[],
+  ) => Promise<any>;
+};
+
+
+type UserState =
+  | "PENDIENTE"
+  | "ACTIVO"
+  | "BLOQUEADO";
+
+type StateAction =
+  | "APPROVE"
+  | "BLOCK"
+  | "UNBLOCK";
+
+async function lockUserState(
+  client: PoolClient,
+  userId: string,
+): Promise<UserState> {
+  const result = await client.query<{
+    estado: UserState;
+  }>(
+    `
+      SELECT estado
+      FROM usuarios
+      WHERE id = $1
+      FOR UPDATE
+    `,
+    [userId],
+  );
+
+  const state = result.rows[0]?.estado;
+
+  if (!state) {
+    throw new AdminServiceError(
+      "NOT_FOUND",
+      "El usuario no existe.",
+    );
+  }
+
+  return state;
+}
+
+function assertStateTransition(
+  currentState: UserState,
+  action: StateAction,
+) {
+  const expectedState: Record<
+    StateAction,
+    UserState
+  > = {
+    APPROVE: "PENDIENTE",
+    BLOCK: "ACTIVO",
+    UNBLOCK: "BLOQUEADO",
+  };
+
+  const labels: Record<
+    StateAction,
+    string
+  > = {
+    APPROVE: "aprobar",
+    BLOCK: "bloquear",
+    UNBLOCK: "desbloquear",
+  };
+
+  if (
+    currentState !==
+    expectedState[action]
+  ) {
+    throw new AdminServiceError(
+      "INVALID_USER_STATE_TRANSITION",
+      `No puedes ${labels[action]} un usuario en estado ${currentState}.`,
+    );
+  }
+}
+
+async function withTransaction<T>(
+  work: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const value = await work(client);
+    await client.query("COMMIT");
+    return value;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function audit(
+  db: Queryable,
   actorId: string,
   targetId: string | null,
   action: string,
@@ -23,7 +124,7 @@ async function audit(
   detail?: string,
   ip?: string,
 ) {
-  await pool.query(
+  await db.query(
     `
       INSERT INTO auditoria_administracion (
         actor_id,
@@ -40,16 +141,23 @@ async function audit(
       actorId,
       targetId,
       action,
-      before ? JSON.stringify(before) : null,
-      after ? JSON.stringify(after) : null,
+      before == null
+        ? null
+        : JSON.stringify(before),
+      after == null
+        ? null
+        : JSON.stringify(after),
       detail ?? null,
       ip ?? null,
     ],
   );
 }
 
-async function userSnapshot(userId: string) {
-  const result = await pool.query(
+async function userSnapshot(
+  db: Queryable,
+  userId: string,
+) {
+  const result = await db.query(
     `
       SELECT
         u.id,
@@ -79,7 +187,8 @@ async function userSnapshot(userId: string) {
             DISTINCT JSONB_BUILD_OBJECT(
               'id', s.id,
               'codigo', s.codigo,
-              'nombre', s.nombre
+              'nombre', s.nombre,
+              'activa', s.activa
             )
           ) FILTER (WHERE s.id IS NOT NULL),
           '[]'::jsonb
@@ -95,7 +204,6 @@ async function userSnapshot(userId: string) {
         ON us.usuario_id = u.id
       LEFT JOIN sucursales s
         ON s.id = us.sucursal_id
-        AND s.activa = TRUE
       WHERE u.id = $1
       GROUP BY u.id
     `,
@@ -136,7 +244,8 @@ export async function listAdminUsers() {
             DISTINCT JSONB_BUILD_OBJECT(
               'id', s.id,
               'codigo', s.codigo,
-              'nombre', s.nombre
+              'nombre', s.nombre,
+              'activa', s.activa
             )
           ) FILTER (WHERE s.id IS NOT NULL),
           '[]'::jsonb
@@ -152,7 +261,6 @@ export async function listAdminUsers() {
         ON us.usuario_id = u.id
       LEFT JOIN sucursales s
         ON s.id = us.sucursal_id
-        AND s.activa = TRUE
       GROUP BY u.id
       ORDER BY
         CASE u.estado
@@ -171,10 +279,9 @@ export async function listAdminUsers() {
 export async function getAdminCatalogs() {
   const [branches, roles] = await Promise.all([
     pool.query(`
-      SELECT id, codigo, nombre
+      SELECT id, codigo, nombre, activa
       FROM sucursales
-      WHERE activa = TRUE
-      ORDER BY nombre
+      ORDER BY activa DESC, nombre
     `),
     pool.query(`
       SELECT id, codigo, nombre
@@ -197,7 +304,184 @@ export async function getAdminCatalogs() {
   };
 }
 
+export async function listAdminBranches() {
+  const result = await pool.query(`
+    SELECT
+      s.id,
+      s.codigo,
+      s.nombre,
+      s.activa,
+      s.creado_en AS "creadoEn",
+      s.actualizado_en AS "actualizadoEn",
+      su.pais_codigo AS "paisCodigo",
+      su.region,
+      su.ciudad,
+
+      (
+        SELECT COUNT(*)::int
+        FROM equipos_ti e
+        WHERE e.sucursal_id = s.id
+      ) AS "equiposTotal",
+
+      (
+        SELECT COUNT(*)::int
+        FROM equipos_ti e
+        WHERE e.sucursal_id = s.id
+          AND e.activo = TRUE
+      ) AS "equiposActivos",
+
+      (
+        SELECT COUNT(*)::int
+        FROM usuarios_sucursales us
+        WHERE us.sucursal_id = s.id
+      ) AS "usuariosAsignados"
+
+    FROM sucursales s
+    LEFT JOIN sucursales_ubicaciones su
+      ON su.sucursal_id = s.id
+    ORDER BY
+      s.activa DESC,
+      s.nombre
+  `);
+
+  return result.rows;
+}
+
+async function validateBranchSelection(
+  client: PoolClient,
+  targetId: string,
+  branchIds: string[],
+  allowExistingInactive: boolean,
+) {
+  const uniqueIds = [
+    ...new Set(branchIds),
+  ];
+
+  if (uniqueIds.length === 0) {
+    return;
+  }
+
+  const result = await client.query<{
+    id: string;
+    activa: boolean;
+    assigned: boolean;
+  }>(
+    `
+      SELECT
+        s.id,
+        s.activa,
+        EXISTS (
+          SELECT 1
+          FROM usuarios_sucursales us
+          WHERE us.usuario_id = $2
+            AND us.sucursal_id = s.id
+        ) AS assigned
+      FROM sucursales s
+      WHERE s.id = ANY($1::uuid[])
+    `,
+    [uniqueIds, targetId],
+  );
+
+  if (result.rows.length !== uniqueIds.length) {
+    throw new AdminServiceError(
+      "BRANCH_NOT_FOUND",
+      "Una de las sucursales seleccionadas no existe.",
+    );
+  }
+
+  const invalid = result.rows.find(
+    (branch) =>
+      !branch.activa &&
+      !(
+        allowExistingInactive &&
+        branch.assigned
+      ),
+  );
+
+  if (invalid) {
+    throw new AdminServiceError(
+      "BRANCH_INACTIVE",
+      "No puedes asignar una sucursal inactiva a un usuario.",
+    );
+  }
+}
+
+async function lockSuperadminInvariant(
+  client: PoolClient,
+) {
+  // Serializa solamente las operaciones que pueden reducir el número
+  // de SUPERADMIN activos. Evita una carrera donde dos administradores
+  // se degraden/bloqueen simultáneamente y ambos crean que queda otro.
+  await client.query(`
+    SELECT pg_advisory_xact_lock(
+      hashtextextended(
+        'inventarios_ti:last_active_superadmin',
+        0
+      )
+    )
+  `);
+}
+
+async function assertCanRemoveActiveSuperadmin(
+  client: PoolClient,
+  targetId: string,
+) {
+  await lockSuperadminInvariant(client);
+
+  const targetResult = await client.query<{
+    is_active_superadmin: boolean;
+  }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM usuarios u
+        INNER JOIN usuarios_roles ur
+          ON ur.usuario_id = u.id
+        INNER JOIN roles r
+          ON r.id = ur.rol_id
+        WHERE u.id = $1
+          AND u.estado = 'ACTIVO'
+          AND r.activo = TRUE
+          AND r.codigo = 'SUPERADMIN'
+      ) AS is_active_superadmin
+    `,
+    [targetId],
+  );
+
+  if (
+    !targetResult.rows[0]
+      ?.is_active_superadmin
+  ) {
+    return;
+  }
+
+  const countResult = await client.query<{
+    total: number;
+  }>(`
+    SELECT COUNT(DISTINCT u.id)::int AS total
+    FROM usuarios u
+    INNER JOIN usuarios_roles ur
+      ON ur.usuario_id = u.id
+    INNER JOIN roles r
+      ON r.id = ur.rol_id
+    WHERE u.estado = 'ACTIVO'
+      AND r.activo = TRUE
+      AND r.codigo = 'SUPERADMIN'
+  `);
+
+  const total =
+    countResult.rows[0]?.total ?? 0;
+
+  if (total <= 1) {
+    throw new AdminServiceError(
+      "LAST_SUPERADMIN",
+      "El sistema debe conservar al menos un SUPERADMIN activo.",
+    );
+  }
+}
+
 async function applyAccess(
+  client: PoolClient,
   targetId: string,
   input: {
     role: ManagedRole;
@@ -206,106 +490,113 @@ async function applyAccess(
   actor: AdminAuthUser,
   approve: boolean,
 ) {
+  const uniqueBranchIds = [
+    ...new Set(input.branchIds),
+  ];
+
   if (
     input.role !== "SUPERADMIN" &&
-    input.branchIds.length === 0
+    uniqueBranchIds.length !== 1
   ) {
     throw new AdminServiceError(
-      "BRANCH_REQUIRED",
-      "Asigna al menos una sucursal.",
+      "BRANCH_CARDINALITY",
+      "Los roles GERENTE y USUARIO deben tener exactamente una sucursal.",
     );
   }
 
-  const client = await pool.connect();
+  await validateBranchSelection(
+    client,
+    targetId,
+    uniqueBranchIds,
+    !approve,
+  );
 
-  try {
-    await client.query("BEGIN");
+  const roleResult = await client.query<{
+    id: string;
+  }>(
+    `
+      SELECT id
+      FROM roles
+      WHERE codigo = $1
+        AND activo = TRUE
+      LIMIT 1
+    `,
+    [input.role],
+  );
 
-    const roleResult = await client.query<{ id: string }>(
+  const roleId = roleResult.rows[0]?.id;
+
+  if (!roleId) {
+    throw new AdminServiceError(
+      "INVALID_ROLE",
+      "El rol no es válido.",
+    );
+  }
+
+  if (
+    !approve &&
+    input.role !== "SUPERADMIN"
+  ) {
+    await assertCanRemoveActiveSuperadmin(
+      client,
+      targetId,
+    );
+  }
+
+  if (approve) {
+    await client.query(
       `
-        SELECT id
-        FROM roles
-        WHERE codigo = $1
-          AND activo = TRUE
-        LIMIT 1
+        UPDATE usuarios
+        SET
+          estado = 'ACTIVO',
+          aprobado_en = NOW(),
+          aprobado_por = $1,
+          bloqueado_en = NULL,
+          bloqueado_por = NULL,
+          motivo_bloqueo = NULL,
+          actualizado_en = NOW()
+        WHERE id = $2
       `,
-      [input.role],
+      [actor.id, targetId],
     );
+  }
 
-    const roleId = roleResult.rows[0]?.id;
+  await client.query(
+    `DELETE FROM usuarios_roles WHERE usuario_id = $1`,
+    [targetId],
+  );
 
-    if (!roleId) {
-      throw new AdminServiceError(
-        "INVALID_ROLE",
-        "El rol no es válido.",
-      );
-    }
+  await client.query(
+    `
+      INSERT INTO usuarios_roles (
+        usuario_id,
+        rol_id,
+        asignado_en,
+        asignado_por
+      )
+      VALUES ($1, $2, NOW(), $3)
+    `,
+    [targetId, roleId, actor.id],
+  );
 
-    if (approve) {
-      await client.query(
-        `
-          UPDATE usuarios
-          SET
-            estado = 'ACTIVO',
-            aprobado_en = NOW(),
-            aprobado_por = $1,
-            bloqueado_en = NULL,
-            bloqueado_por = NULL,
-            motivo_bloqueo = NULL,
-            actualizado_en = NOW()
-          WHERE id = $2
-        `,
-        [actor.id, targetId],
-      );
-    }
+  await client.query(
+    `DELETE FROM usuarios_sucursales WHERE usuario_id = $1`,
+    [targetId],
+  );
 
-    await client.query(
-      `DELETE FROM usuarios_roles WHERE usuario_id = $1`,
-      [targetId],
-    );
-
+  for (const branchId of uniqueBranchIds) {
     await client.query(
       `
-        INSERT INTO usuarios_roles (
+        INSERT INTO usuarios_sucursales (
           usuario_id,
-          rol_id,
-          asignado_en,
-          asignado_por
+          sucursal_id,
+          asignada_en,
+          asignada_por
         )
         VALUES ($1, $2, NOW(), $3)
       `,
-      [targetId, roleId, actor.id],
+      [targetId, branchId, actor.id],
     );
-
-    await client.query(
-      `DELETE FROM usuarios_sucursales WHERE usuario_id = $1`,
-      [targetId],
-    );
-
-    for (const branchId of input.branchIds) {
-      await client.query(
-        `
-          INSERT INTO usuarios_sucursales (
-            usuario_id,
-            sucursal_id,
-            asignada_en,
-            asignada_por
-          )
-          VALUES ($1, $2, NOW(), $3)
-          ON CONFLICT (usuario_id, sucursal_id)
-          DO UPDATE SET
-            asignada_por = EXCLUDED.asignada_por
-        `,
-        [targetId, branchId, actor.id],
-      );
-    }
-
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
   }
 }
 
@@ -318,35 +609,49 @@ export async function approveUser(
   actor: AdminAuthUser,
   ip?: string,
 ) {
-  const before = await userSnapshot(targetId);
+  return withTransaction(async (client) => {
+    const currentState =
+      await lockUserState(
+        client,
+        targetId,
+      );
 
-  if (!before) {
-    throw new AdminServiceError(
-      "NOT_FOUND",
-      "El usuario no existe.",
+    assertStateTransition(
+      currentState,
+      "APPROVE",
     );
-  }
 
-  await applyAccess(
-    targetId,
-    input,
-    actor,
-    true,
-  );
+    const before = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  const after = await userSnapshot(targetId);
+    await applyAccess(
+      client,
+      targetId,
+      input,
+      actor,
+      true,
+    );
 
-  await audit(
-    actor.id,
-    targetId,
-    "USUARIO_APROBADO",
-    before,
-    after,
-    `Rol: ${input.role}`,
-    ip,
-  );
+    const after = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  return after;
+    await audit(
+      client,
+      actor.id,
+      targetId,
+      "USUARIO_APROBADO",
+      before,
+      after,
+      `Rol: ${input.role}`,
+      ip,
+    );
+
+    return after;
+  });
 }
 
 export async function updateUserAccess(
@@ -358,35 +663,43 @@ export async function updateUserAccess(
   actor: AdminAuthUser,
   ip?: string,
 ) {
-  const before = await userSnapshot(targetId);
-
-  if (!before) {
-    throw new AdminServiceError(
-      "NOT_FOUND",
-      "El usuario no existe.",
+  return withTransaction(async (client) => {
+    await lockUserState(
+      client,
+      targetId,
     );
-  }
 
-  await applyAccess(
-    targetId,
-    input,
-    actor,
-    false,
-  );
+    const before = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  const after = await userSnapshot(targetId);
+    await applyAccess(
+      client,
+      targetId,
+      input,
+      actor,
+      false,
+    );
 
-  await audit(
-    actor.id,
-    targetId,
-    "ACCESO_USUARIO_ACTUALIZADO",
-    before,
-    after,
-    `Rol: ${input.role}`,
-    ip,
-  );
+    const after = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  return after;
+    await audit(
+      client,
+      actor.id,
+      targetId,
+      "ACCESO_USUARIO_ACTUALIZADO",
+      before,
+      after,
+      `Rol: ${input.role}`,
+      ip,
+    );
+
+    return after;
+  });
 }
 
 export async function blockUser(
@@ -402,42 +715,76 @@ export async function blockUser(
     );
   }
 
-  const before = await userSnapshot(targetId);
+  return withTransaction(async (client) => {
+    const currentState =
+      await lockUserState(
+        client,
+        targetId,
+      );
 
-  if (!before) {
-    throw new AdminServiceError(
-      "NOT_FOUND",
-      "El usuario no existe.",
+    assertStateTransition(
+      currentState,
+      "BLOCK",
     );
-  }
 
-  await pool.query(
-    `
-      UPDATE usuarios
-      SET
-        estado = 'BLOQUEADO',
-        bloqueado_en = NOW(),
-        bloqueado_por = $1,
-        motivo_bloqueo = $2,
-        actualizado_en = NOW()
-      WHERE id = $3
-    `,
-    [actor.id, reason, targetId],
-  );
+    const before = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  const after = await userSnapshot(targetId);
+    await assertCanRemoveActiveSuperadmin(
+      client,
+      targetId,
+    );
 
-  await audit(
-    actor.id,
-    targetId,
-    "USUARIO_BLOQUEADO",
-    before,
-    after,
-    reason,
-    ip,
-  );
+    await client.query(
+      `
+        UPDATE usuarios
+        SET
+          estado = 'BLOQUEADO',
+          bloqueado_en = NOW(),
+          bloqueado_por = $1,
+          motivo_bloqueo = $2,
+          actualizado_en = NOW()
+        WHERE id = $3
+      `,
+      [actor.id, reason, targetId],
+    );
 
-  return after;
+    await client.query(
+      `
+        UPDATE sesiones
+        SET
+          revocada_en = COALESCE(revocada_en, NOW()),
+          revocada_por = $1,
+          motivo_revocacion = COALESCE(
+            motivo_revocacion,
+            'USUARIO_BLOQUEADO'
+          )
+        WHERE usuario_id = $2
+          AND revocada_en IS NULL
+      `,
+      [actor.id, targetId],
+    );
+
+    const after = await userSnapshot(
+      client,
+      targetId,
+    );
+
+    await audit(
+      client,
+      actor.id,
+      targetId,
+      "USUARIO_BLOQUEADO",
+      before,
+      after,
+      reason,
+      ip,
+    );
+
+    return after;
+  });
 }
 
 export async function unblockUser(
@@ -445,42 +792,55 @@ export async function unblockUser(
   actor: AdminAuthUser,
   ip?: string,
 ) {
-  const before = await userSnapshot(targetId);
+  return withTransaction(async (client) => {
+    const currentState =
+      await lockUserState(
+        client,
+        targetId,
+      );
 
-  if (!before) {
-    throw new AdminServiceError(
-      "NOT_FOUND",
-      "El usuario no existe.",
+    assertStateTransition(
+      currentState,
+      "UNBLOCK",
     );
-  }
 
-  await pool.query(
-    `
-      UPDATE usuarios
-      SET
-        estado = 'ACTIVO',
-        bloqueado_en = NULL,
-        bloqueado_por = NULL,
-        motivo_bloqueo = NULL,
-        actualizado_en = NOW()
-      WHERE id = $1
-    `,
-    [targetId],
-  );
+    const before = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  const after = await userSnapshot(targetId);
+    await client.query(
+      `
+        UPDATE usuarios
+        SET
+          estado = 'ACTIVO',
+          bloqueado_en = NULL,
+          bloqueado_por = NULL,
+          motivo_bloqueo = NULL,
+          actualizado_en = NOW()
+        WHERE id = $1
+      `,
+      [targetId],
+    );
 
-  await audit(
-    actor.id,
-    targetId,
-    "USUARIO_DESBLOQUEADO",
-    before,
-    after,
-    undefined,
-    ip,
-  );
+    const after = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  return after;
+    await audit(
+      client,
+      actor.id,
+      targetId,
+      "USUARIO_DESBLOQUEADO",
+      before,
+      after,
+      undefined,
+      ip,
+    );
+
+    return after;
+  });
 }
 
 export async function revokeUserSessions(
@@ -488,33 +848,130 @@ export async function revokeUserSessions(
   actor: AdminAuthUser,
   ip?: string,
 ) {
-  const result = await pool.query(
-    `
-      UPDATE sesiones
-      SET
-        revocada_en = COALESCE(revocada_en, NOW()),
-        revocada_por = $1,
-        motivo_revocacion = 'REVOCACION_ADMINISTRATIVA'
-      WHERE usuario_id = $2
-        AND revocada_en IS NULL
-      RETURNING id
-    `,
-    [actor.id, targetId],
-  );
+  return withTransaction(async (client) => {
+    const target = await userSnapshot(
+      client,
+      targetId,
+    );
 
-  await audit(
-    actor.id,
-    targetId,
-    "SESIONES_REVOCADAS",
-    null,
-    {
-      sesionesRevocadas: result.rowCount ?? 0,
-    },
-    undefined,
-    ip,
-  );
+    if (!target) {
+      throw new AdminServiceError(
+        "NOT_FOUND",
+        "El usuario no existe.",
+      );
+    }
 
-  return {
-    revoked: result.rowCount ?? 0,
-  };
+    const result = await client.query(
+      `
+        UPDATE sesiones
+        SET
+          revocada_en = COALESCE(revocada_en, NOW()),
+          revocada_por = $1,
+          motivo_revocacion = 'REVOCACION_ADMINISTRATIVA'
+        WHERE usuario_id = $2
+          AND revocada_en IS NULL
+        RETURNING id
+      `,
+      [actor.id, targetId],
+    );
+
+    const revoked =
+      result.rowCount ?? 0;
+
+    await audit(
+      client,
+      actor.id,
+      targetId,
+      "SESIONES_REVOCADAS",
+      null,
+      {
+        sesionesRevocadas: revoked,
+      },
+      undefined,
+      ip,
+    );
+
+    return {
+      revoked,
+    };
+  });
+}
+
+export async function setBranchActiveState(
+  branchId: string,
+  active: boolean,
+  actor: AdminAuthUser,
+  ip?: string,
+) {
+  return withTransaction(async (client) => {
+    const result = await client.query<{
+      id: string;
+      codigo: string;
+      nombre: string;
+      activa: boolean;
+    }>(
+      `
+        SELECT
+          id,
+          codigo,
+          nombre,
+          activa
+        FROM sucursales
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [branchId],
+    );
+
+    const before = result.rows[0];
+
+    if (!before) {
+      throw new AdminServiceError(
+        "BRANCH_NOT_FOUND",
+        "La sucursal no existe.",
+      );
+    }
+
+    if (before.activa === active) {
+      return before;
+    }
+
+    const updateResult = await client.query<{
+      id: string;
+      codigo: string;
+      nombre: string;
+      activa: boolean;
+    }>(
+      `
+        UPDATE sucursales
+        SET
+          activa = $1,
+          actualizado_en = NOW()
+        WHERE id = $2
+        RETURNING
+          id,
+          codigo,
+          nombre,
+          activa
+      `,
+      [active, branchId],
+    );
+
+    const after = updateResult.rows[0];
+
+    await audit(
+      client,
+      actor.id,
+      null,
+      active
+        ? "SUCURSAL_REACTIVADA"
+        : "SUCURSAL_DESACTIVADA",
+      before,
+      after,
+      `${before.codigo} · ${before.nombre}`,
+      ip,
+    );
+
+    return after;
+  });
 }
