@@ -19,6 +19,7 @@ import { Spinner } from "../../../../components/ui/Spinner";
 import { TextArea } from "../../../../components/ui/TextArea";
 import { useToast } from "../../../../components/ui/ToastProvider";
 import { getInventoryEquipment } from "../../../inventory/services/inventory.service";
+import { EquipmentInvoiceEditor } from "../components/EquipmentInvoiceEditor";
 import type { InventoryAsset } from "../../../inventory/types/inventory.types";
 import {
   getEquipmentCatalogs,
@@ -28,6 +29,34 @@ import type {
   EquipmentCatalogs,
   EquipmentFormValues,
 } from "../types/equipment.types";
+
+function withCurrentCatalogItem(
+  items: EquipmentCatalogs["tiposEquipo"],
+  current: {
+    id: string;
+    codigo: string;
+    nombre: string;
+  },
+) {
+  if (
+    !current.id ||
+    items.some(
+      (item) => item.id === current.id,
+    )
+  ) {
+    return items;
+  }
+
+  return [
+    {
+      ...current,
+      activo: false,
+      descripcion:
+        "Valor actualmente asignado. Puede conservarse, pero ya no está disponible para nuevas asignaciones.",
+    },
+    ...items,
+  ];
+}
 
 function emptyValues(): EquipmentFormValues {
   return {
@@ -99,7 +128,112 @@ export function EquipmentEditPage() {
       if (!mounted) return;
 
       setAsset(equipment);
-      setCatalogs(data);
+
+      const hasCurrentInvoice =
+        equipment.facturaId &&
+        data.facturasCompra.some(
+          (invoice) => invoice.id === equipment.facturaId,
+        );
+
+      const editCatalogs: EquipmentCatalogs = {
+        ...data,
+        sucursales:
+          withCurrentCatalogItem(
+            data.sucursales,
+            {
+              id: equipment.sucursalId,
+              codigo:
+                equipment.sucursalCodigo,
+              nombre:
+                equipment.sucursalNombre,
+            },
+          ),
+        tiposEquipo:
+          withCurrentCatalogItem(
+            data.tiposEquipo,
+            {
+              id: equipment.tipoEquipoId,
+              codigo:
+                equipment.tipoCodigo,
+              nombre:
+                equipment.tipoNombre,
+            },
+          ),
+        departamentos:
+          withCurrentCatalogItem(
+            data.departamentos,
+            {
+              id:
+                equipment.departamentoId,
+              codigo:
+                equipment.departamentoCodigo,
+              nombre:
+                equipment.departamentoNombre,
+            },
+          ),
+        estadosFuncionamiento:
+          withCurrentCatalogItem(
+            data.estadosFuncionamiento,
+            {
+              id: equipment.estadoId,
+              codigo:
+                equipment.estadoCodigo,
+              nombre:
+                equipment.estadoNombre,
+            },
+          ),
+        condicionesFisicas:
+          withCurrentCatalogItem(
+            data.condicionesFisicas,
+            {
+              id:
+                equipment.condicionId,
+              codigo:
+                equipment.condicionCodigo,
+              nombre:
+                equipment.condicionNombre,
+            },
+          ),
+        tiposIncorporacion:
+          withCurrentCatalogItem(
+            data.tiposIncorporacion,
+            {
+              id:
+                equipment.incorporacionId,
+              codigo:
+                equipment.incorporacionCodigo,
+              nombre:
+                equipment.incorporacionNombre,
+            },
+          ),
+      };
+
+      if (
+        equipment.facturaId &&
+        !hasCurrentInvoice
+      ) {
+        editCatalogs.facturasCompra = [
+          {
+            id: equipment.facturaId,
+            numeroFactura:
+              equipment.facturaNumero,
+            fechaFactura:
+              equipment.facturaFecha,
+            proveedorNombre:
+              equipment.facturaProveedor,
+            razonSocial:
+              equipment.facturaRazonSocial,
+            moneda:
+              equipment.facturaMoneda ??
+              "MXN",
+            total:
+              equipment.facturaTotal,
+          },
+          ...data.facturasCompra,
+        ];
+      }
+
+      setCatalogs(editCatalogs);
 
       setValues({
         ...emptyValues(),
@@ -134,6 +268,12 @@ export function EquipmentEditPage() {
           equipment.ubicacionExacta,
         tipoIncorporacionId:
           equipment.incorporacionId,
+        facturaModo:
+          equipment.facturaId
+            ? "ASOCIAR_EXISTENTE"
+            : "COMPLETAR_DESPUES",
+        facturaExistenteId:
+          equipment.facturaId ?? "",
         facturaPartida:
           equipment.facturaPartida ?? "",
         importeAdquisicion:
@@ -157,6 +297,16 @@ export function EquipmentEditPage() {
       )?.codigo,
     [catalogs, values.tipoEquipoId],
   );
+
+  const selectedIncorporation =
+    useMemo(
+      () =>
+        catalogs?.tiposIncorporacion.find(
+          (item) =>
+            item.id === values.tipoIncorporacionId,
+        )?.codigo,
+      [catalogs, values.tipoIncorporacionId],
+    );
 
   function set<
     K extends keyof EquipmentFormValues,
@@ -222,11 +372,15 @@ export function EquipmentEditPage() {
       id: string;
       nombre: string;
       descripcion?: string | null;
+      activo?: boolean;
     }>,
   ) =>
     list.map((item) => ({
       value: item.id,
-      label: item.nombre,
+      label:
+        item.activo === false
+          ? `${item.nombre} · Inactivo (actual)`
+          : item.nombre,
       description:
         item.descripcion ??
         undefined,
@@ -543,6 +697,16 @@ export function EquipmentEditPage() {
                   catalogs.tiposIncorporacion,
                 )}
               />
+
+              {(selectedIncorporation === "COMPRA_NUEVA" ||
+                Boolean(asset.facturaId)) && (
+                <EquipmentInvoiceEditor
+                  values={values}
+                  catalogs={catalogs}
+                  hadInvoice={Boolean(asset.facturaId)}
+                  onChange={setValues}
+                />
+              )}
 
               <Input
                 label="Partida de factura"

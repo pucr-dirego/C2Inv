@@ -1,3 +1,4 @@
+
 export type ManagedRole =
   | "SUPERADMIN"
   | "GERENTE"
@@ -7,6 +8,7 @@ export interface AdminCatalogItem {
   id: string;
   codigo: string;
   nombre: string;
+  activa?: boolean;
 }
 
 export interface AdminUser {
@@ -27,4 +29,19 @@ export interface AdminUser {
 export interface AdminCatalogs {
   sucursales: AdminCatalogItem[];
   roles: AdminCatalogItem[];
+}
+
+export interface AdminBranch {
+  id: string;
+  codigo: string;
+  nombre: string;
+  activa: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+  paisCodigo: string | null;
+  region: string | null;
+  ciudad: string | null;
+  equiposTotal: number;
+  equiposActivos: number;
+  usuariosAsignados: number;
 }

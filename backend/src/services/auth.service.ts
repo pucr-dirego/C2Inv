@@ -93,18 +93,21 @@ async function getUserContext(
     id: string;
     codigo: string;
     nombre: string;
+    activa: boolean;
   }>(
     `
       SELECT
         s.id,
         s.codigo,
-        s.nombre
+        s.nombre,
+        s.activa
       FROM sucursales s
       INNER JOIN usuarios_sucursales us
         ON us.sucursal_id = s.id
       WHERE us.usuario_id = $1
-        AND s.activa = TRUE
-      ORDER BY s.nombre
+      ORDER BY
+        s.activa DESC,
+        s.nombre
     `,
     [userId],
   );
@@ -157,9 +160,10 @@ export async function registerUser(
       id: string;
       codigo: string;
       nombre: string;
+      activa: boolean;
     }>(
       `
-        SELECT id, codigo, nombre
+        SELECT id, codigo, nombre, activa
         FROM sucursales
         WHERE id = $1
           AND activa = TRUE

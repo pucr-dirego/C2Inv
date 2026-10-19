@@ -14,6 +14,25 @@ function user(res: Response) {
   return res.locals.authUser as InventoryAuthUser;
 }
 
+/**
+ * Express puede entregar un parámetro ausente o múltiple.
+ * Validamos el identificador antes de enviarlo a los servicios.
+ */
+function getRouteId(req: Request, res: Response): string | null {
+  const id = req.params.id;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({
+      ok: false,
+      code: "INVALID_ID",
+      message: "El identificador del equipo no es válido.",
+    });
+    return null;
+  }
+
+  return id;
+}
+
 function handleError(
   error: unknown,
   res: Response,
@@ -137,10 +156,13 @@ export async function detail(
   req: Request,
   res: Response,
 ): Promise<void> {
+  const id = getRouteId(req, res);
+  if (id === null) return;
+
   try {
     const equipment = await getInventoryEquipment(
       user(res),
-      req.params.id,
+      id,
     );
 
     res.json({

@@ -2,6 +2,7 @@ export interface InventoryBranch {
   id: string;
   codigo: string;
   nombre: string;
+  activa?: boolean;
 }
 
 export interface EquipmentHistoryItem {

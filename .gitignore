@@ -80,3 +80,7 @@ Desktop.ini
 # =========================================================
 
 *.local
+
+# Release artifacts locales
+invti-release-scan-*.zip
+invti-release-*.zip

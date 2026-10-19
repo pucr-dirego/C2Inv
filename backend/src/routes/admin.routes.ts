@@ -4,6 +4,8 @@ import {
   access,
   approve,
   block,
+  branchStatus,
+  branches,
   catalogs,
   revokeSessions,
   unblock,
@@ -19,6 +21,11 @@ router.use(requireRoles("SUPERADMIN"));
 
 router.get("/users", users);
 router.get("/catalogs", catalogs);
+router.get("/branches", branches);
+router.patch(
+  "/branches/:id/status",
+  branchStatus,
+);
 router.post("/users/:id/approve", approve);
 router.put("/users/:id/access", access);
 router.post("/users/:id/block", block);

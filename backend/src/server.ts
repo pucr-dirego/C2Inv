@@ -10,6 +10,8 @@ import catalogsRoutes from "./routes/catalogs.routes.js";
 import equipmentRoutes from "./routes/equipment.routes.js";
 import inventoryRoutes from "./routes/inventory.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
+import reportsRoutes from "./routes/reports.routes.js";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3002);
@@ -37,6 +39,14 @@ app.use(
       callback(new Error("Origen no permitido por CORS."));
     },
     credentials: true,
+    exposedHeaders: [
+      "Content-Disposition",
+      "X-Report-Rows",
+      "X-Report-Columns",
+      "X-Report-Pages",
+      "X-Report-Sheets",
+      "X-Report-Generation-Ms",
+    ],
   }),
 );
 
@@ -74,6 +84,8 @@ app.use("/api/catalogos", catalogsRoutes);
 app.use("/api/equipos", equipmentRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/reports", reportsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({

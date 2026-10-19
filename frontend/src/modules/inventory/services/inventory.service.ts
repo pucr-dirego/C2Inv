@@ -36,7 +36,7 @@ async function request<T>(
 }
 
 function queryString(
-  values: Record<string, unknown>,
+  values: object,
 ) {
   const params = new URLSearchParams();
 

@@ -7,6 +7,7 @@ export interface AuthBranch {
   id: string;
   codigo: string;
   nombre: string;
+  activa: boolean;
 }
 
 export interface AuthUser {

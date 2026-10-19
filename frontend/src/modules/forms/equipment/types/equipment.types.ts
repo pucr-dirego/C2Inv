@@ -3,6 +3,7 @@ export interface CatalogItem {
   codigo: string;
   nombre: string;
   descripcion?: string | null;
+  activo?: boolean;
 }
 
 export interface PurchaseInvoiceCatalogItem {
