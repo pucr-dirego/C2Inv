@@ -73,7 +73,7 @@ const TABLE = {
   cellPaddingY: 4,
   bodyFontSize: 7.1,
   headerFontSize: 6.6,
-  maxColumnsPerBand: 8,
+  maxColumnsPerBand: 10,
 } as const;
 
 const COLUMN_LABELS: Record<
@@ -775,22 +775,44 @@ function drawRunningHeader(
       { lineBreak: false },
     );
 
+  const bandLabel =
+    bandCount > 1
+      ? bandIndex === 0
+        ? `Datos generales · Bloque 1 de ${bandCount}`
+        : `Datos complementarios · Bloque ${bandIndex + 1} de ${bandCount}`
+      : "Detalle del inventario";
+
   doc
     .font("Helvetica")
     .fontSize(6.8)
     .fillColor(COLORS.tertiary)
     .text(
-      bandCount > 1
-        ? `Bloque de columnas ${bandIndex + 1} de ${bandCount}`
-        : "Detalle del inventario",
+      bandLabel,
       rightX,
-      y + 4,
+      y + 2,
       {
         width: 170,
         align: "right",
         lineBreak: false,
       },
     );
+
+  if (bandCount > 1 && bandIndex > 0) {
+    doc
+      .font("Helvetica")
+      .fontSize(5.9)
+      .fillColor(COLORS.secondary)
+      .text(
+        "Mismos equipos · no son registros adicionales",
+        rightX,
+        y + 13,
+        {
+          width: 170,
+          align: "right",
+          lineBreak: false,
+        },
+      );
+  }
 
   const lineY = y + 26;
 
@@ -1072,6 +1094,7 @@ function drawInactiveSection(
 function drawCoverHeader(
   doc: PDFKit.PDFDocument,
   input: ReportPdfRenderInput,
+  bandCount: number,
 ): number {
   let y = PAGE.marginTop;
   const width = availableTableWidth(doc);
@@ -1398,6 +1421,24 @@ function drawCoverHeader(
       { characterSpacing: 0.5 },
     );
 
+  if (bandCount > 1) {
+    doc
+      .font("Helvetica")
+      .fontSize(6.4)
+      .fillColor(COLORS.secondary)
+      .text(
+        `Datos generales · Bloque 1 de ${bandCount}. Los mismos equipos continúan en los bloques siguientes con columnas adicionales.`,
+        PAGE.marginLeft,
+        y + 11,
+        {
+          width,
+          lineBreak: false,
+        },
+      );
+
+    return y + 25;
+  }
+
   return y + 14;
 }
 
@@ -1542,6 +1583,7 @@ export async function renderReportPdf(
         ? drawCoverHeader(
             doc,
             input,
+            bands.length,
           )
         : drawRunningHeader(
             doc,
