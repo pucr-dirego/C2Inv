@@ -12,7 +12,7 @@ export interface AnalyticsBranch {
   name: string;
   city: string;
   region: string;
-  coordinates: [number, number];
+  coordinates: [number, number] | null;
   equipment: number;
   active: number;
   operational: number;

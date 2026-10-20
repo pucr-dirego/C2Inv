@@ -113,7 +113,7 @@ export function AnalyticsPage() {
       summarizeBranches(
         countryBranches,
         country.name,
-        `Vista nacional · ${countryBranches.length} sucursal${countryBranches.length === 1 ? "" : "es"} georreferenciada${countryBranches.length === 1 ? "" : "s"}`,
+        `Vista nacional · ${countryBranches.length} sucursal${countryBranches.length === 1 ? "" : "es"} con ubicación territorial`,
       ),
     [country.name, countryBranches],
   );

@@ -26,8 +26,8 @@ type BranchRow = {
   country: AnalyticsCountryCode;
   city: string;
   region: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   equipment: number;
   active: number;
   operational: number;
@@ -204,8 +204,6 @@ export async function getAnalyticsGeography(
 
       WHERE s.activa = TRUE
         AND u.pais_codigo = $1
-        AND u.latitud IS NOT NULL
-        AND u.longitud IS NOT NULL
         ${scoped.sql}
 
       GROUP BY
@@ -244,8 +242,6 @@ export async function getAnalyticsGeography(
 
       WHERE s.activa = TRUE
         AND u.pais_codigo = $1
-        AND u.latitud IS NOT NULL
-        AND u.longitud IS NOT NULL
         ${scoped.sql}
 
       GROUP BY
@@ -284,8 +280,6 @@ export async function getAnalyticsGeography(
 
       WHERE s.activa = TRUE
         AND u.pais_codigo = $1
-        AND u.latitud IS NOT NULL
-        AND u.longitud IS NOT NULL
         ${scoped.sql}
 
       GROUP BY
@@ -319,8 +313,6 @@ export async function getAnalyticsGeography(
           ON u.sucursal_id = s.id
         WHERE s.activa = TRUE
           AND u.pais_codigo = $1
-          AND u.latitud IS NOT NULL
-          AND u.longitud IS NOT NULL
           ${scoped.sql}
       )
 
@@ -384,7 +376,11 @@ export async function getAnalyticsGeography(
       name: row.name,
       city: row.city,
       region: row.region,
-      coordinates: [row.longitude, row.latitude],
+      coordinates:
+        row.longitude !== null &&
+        row.latitude !== null
+          ? [row.longitude, row.latitude]
+          : null,
       equipment: row.equipment,
       active: row.active,
       operational: row.operational,

@@ -528,9 +528,43 @@ export async function getReportOptions(
       optionsScope,
     );
 
-    return await getReportOptionsFromScope(
+    const options = await getReportOptionsFromScope(
       scope,
     );
+
+    /**
+     * La pantalla inicial necesita conocer también las sucursales
+     * inactivas para permitir consultas históricas, pero esas
+     * sucursales NO forman parte del alcance operativo por defecto.
+     *
+     * Por eso conservamos todas las opciones y filtramos únicamente
+     * las advertencias iniciales a sucursales activas. Cuando el
+     * usuario genera un preview con includeInactiveBranches=true,
+     * resolveReportScope() vuelve a calcular el scope real y sus
+     * warnings completos.
+     */
+    const activeBranchIds = new Set(
+      scope.activeBranches.map(
+        (branch) => branch.id,
+      ),
+    );
+
+    const defaultWarnings = scope.warnings
+      .map((warning) => ({
+        ...warning,
+        branchIds: warning.branchIds.filter(
+          (branchId) => activeBranchIds.has(branchId),
+        ),
+      }))
+      .filter((warning) => warning.branchIds.length > 0);
+
+    return {
+      ...options,
+      scope: {
+        ...options.scope,
+        warnings: defaultWarnings,
+      },
+    };
   } catch (error) {
     rethrowKnownServiceError(error);
   }

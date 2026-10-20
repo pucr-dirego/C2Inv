@@ -45,18 +45,28 @@ type MapView = {
   zoom: number;
 };
 
+type MappableAnalyticsBranch = AnalyticsBranch & {
+  coordinates: [number, number];
+};
+
 type BranchMarkerGroup = {
   key: string;
   coordinates: [number, number];
-  branches: AnalyticsBranch[];
+  branches: MappableAnalyticsBranch[];
 };
+
+function hasMapCoordinates(
+  branch: AnalyticsBranch,
+): branch is MappableAnalyticsBranch {
+  return branch.coordinates !== null;
+}
 
 function clampZoom(value: number) {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 }
 
 function displayCoordinates(
-  branch: AnalyticsBranch,
+  branch: MappableAnalyticsBranch,
 ): [number, number] {
   const region = comparableRegionName(branch.region);
   const city = branch.city.trim().toLocaleLowerCase("es");
@@ -104,9 +114,11 @@ function regionStats(
 }
 
 function markerGroups(branches: AnalyticsBranch[]) {
-  const grouped = new Map<string, AnalyticsBranch[]>();
+  const grouped = new Map<string, MappableAnalyticsBranch[]>();
 
-  branches.forEach((branch) => {
+  branches
+    .filter(hasMapCoordinates)
+    .forEach((branch) => {
     const key = branch.coordinates
       .map((value) => value.toFixed(5))
       .join("|");
@@ -171,20 +183,22 @@ function spiderOffset(
 }
 
 function branchGroupCenter(branches: AnalyticsBranch[]) {
-  if (branches.length === 0) {
+  const mappableBranches = branches.filter(hasMapCoordinates);
+
+  if (mappableBranches.length === 0) {
     return null;
   }
 
   const longitude =
-    branches.reduce(
+    mappableBranches.reduce(
       (sum, branch) => sum + branch.coordinates[0],
       0,
-    ) / branches.length;
+    ) / mappableBranches.length;
   const latitude =
-    branches.reduce(
+    mappableBranches.reduce(
       (sum, branch) => sum + branch.coordinates[1],
       0,
-    ) / branches.length;
+    ) / mappableBranches.length;
 
   return [longitude, latitude] as [number, number];
 }
@@ -533,9 +547,14 @@ export function GeoInventoryMap({
     zoom: MIN_ZOOM,
   }));
 
-  const groups = useMemo(
-    () => markerGroups(branches),
+  const mappableBranches = useMemo(
+    () => branches.filter(hasMapCoordinates),
     [branches],
+  );
+
+  const groups = useMemo(
+    () => markerGroups(mappableBranches),
+    [mappableBranches],
   );
 
   const maxRegionEquipment = useMemo(() => {
@@ -554,7 +573,10 @@ export function GeoInventoryMap({
   }, [country.code, country.projectionCenter]);
 
   useEffect(() => {
-    if (!selectedBranch) {
+    if (
+      !selectedBranch ||
+      !hasMapCoordinates(selectedBranch)
+    ) {
       return;
     }
 
@@ -631,10 +653,13 @@ export function GeoInventoryMap({
   }
 
   function selectBranch(branch: AnalyticsBranch) {
-    setView((current) => ({
-      center: displayCoordinates(branch),
-      zoom: Math.max(current.zoom, BRANCH_FOCUS_ZOOM),
-    }));
+    if (hasMapCoordinates(branch)) {
+      setView((current) => ({
+        center: displayCoordinates(branch),
+        zoom: Math.max(current.zoom, BRANCH_FOCUS_ZOOM),
+      }));
+    }
+
     onSelectBranch(branch);
   }
 
@@ -700,7 +725,9 @@ export function GeoInventoryMap({
         <div className="mt-1 text-[10px] text-(--text-tertiary)">
           {focusStats
             ? `${focusStats.branches} sucursal${focusStats.branches === 1 ? "" : "es"} · ${formatInteger(focusStats.equipment)} equipos`
-            : `${branches.length} sucursal${branches.length === 1 ? "" : "es"} georreferenciada${branches.length === 1 ? "" : "s"}`}
+            : mappableBranches.length === branches.length
+              ? `${branches.length} sucursal${branches.length === 1 ? "" : "es"} georreferenciada${branches.length === 1 ? "" : "s"}`
+              : `${branches.length} sucursal${branches.length === 1 ? "" : "es"} con ubicación · ${mappableBranches.length} en mapa`}
         </div>
       </div>
 
